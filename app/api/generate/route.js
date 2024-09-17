@@ -19,30 +19,35 @@ Here are additional guidelines to follow:
 8. Tailor the difficulty level of the flashcards to the user's specified preferences.
 9. If given a body of text, extract the most important and relevant information for the flashcards.
 10. Aim to create a balanced set of flashcards that covers the topic comprehensively.
-
+11. Only generates 10 flashcards
+12. If prompt is incomplete or you are unable to process it, then only generate one flash card saying this on both sides: "Please enter a more clear prompt."
 Return in the following JSON format
 {
-    "flashcards":{
+    "flashcards":[{
         "front": str,
         "back": str
-    }
+    }]
 }
-`;
+`
 
 export async function POST(req) {
-    const openai = OpenAI();
-    const data = await req.text()
+    try {
+        const openai = new OpenAI();
+        const data = await req.text();
 
-    const completion = await openai.chat.completetion.create({
-        messages: [
-            {role: "system", content: systemPrompt},
-            {role: "user", content: data},
-        ],
-        model: "gpt-4o",
-        response_format: {type: 'json_object'}
-    })
-    const flashcards = JSON.parse(completion.choices[0].message.content)
+        const completion = await openai.chat.completions.create({
+            model: 'gpt-4',
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: data },
+            ],
+        });
 
-    return NextResponse.json(flashcards.flashcards)
+        const flashcards = JSON.parse(completion.choices[0].message.content);
+
+        return NextResponse.json(flashcards.flashcards);
+    } catch (error) {
+        console.error('Error in OpenAI API or Response:', error);
+        return NextResponse.error();
+    }
 }
-
