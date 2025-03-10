@@ -1,6 +1,7 @@
-import {NextResponse} from 'next/server';
+import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+// System prompt to guide OpenAI's response when generating flashcards
 const systemPrompt = `
 You are an AI assistant helping users create and study flashcards for a variety of subjects. 
 Your role is to generate high-quality flashcards based on the user's input, ensuring the flashcards are concise, accurate, and clear. 
@@ -19,35 +20,40 @@ Here are additional guidelines to follow:
 8. Tailor the difficulty level of the flashcards to the user's specified preferences.
 9. If given a body of text, extract the most important and relevant information for the flashcards.
 10. Aim to create a balanced set of flashcards that covers the topic comprehensively.
-11. Only generates 10 flashcards
-12. If prompt is incomplete or you are unable to process it, then only generate one flash card saying this on both sides: "Please enter a more clear prompt."
-Return in the following JSON format
+11. Only generate 12 flashcards by default unless the user specifies a number; the maximum number of flashcards is 24.
+12. If the prompt is incomplete or unclear, generate one flashcard with this message on both sides: "Please enter a clearer prompt."
+
+Return the flashcards in the following JSON format:
 {
-    "flashcards":[{
-        "front": str,
-        "back": str
-    }]
+    "flashcards": [
+        {
+            "front": "Question or term",
+            "back": "Answer or explanation"
+        }
+    ]
 }
-`
+`;
 
 export async function POST(req) {
     try {
         const openai = new OpenAI();
-        const data = await req.text();
+        const data = await req.text(); // Extract user input text from the request body
 
+        // Generate flashcards using OpenAI's chat completion API
         const completion = await openai.chat.completions.create({
             model: 'gpt-4',
             messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: data },
+                { role: 'system', content: systemPrompt }, // System prompt to guide the response
+                { role: 'user', content: data }, // User input text
             ],
         });
 
+        // Parse the OpenAI response into JSON format
         const flashcards = JSON.parse(completion.choices[0].message.content);
 
-        return NextResponse.json(flashcards.flashcards);
+        return NextResponse.json(flashcards.flashcards); // Return the generated flashcards
     } catch (error) {
-        console.error('Error in OpenAI API or Response:', error);
-        return NextResponse.error();
+        console.error('Error in OpenAI API or response:', error);
+        return NextResponse.error(); // Return a generic error response
     }
 }
