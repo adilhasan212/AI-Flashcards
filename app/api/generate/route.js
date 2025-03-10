@@ -54,6 +54,6 @@ export async function POST(req) {
         return NextResponse.json(flashcards.flashcards); // Return the generated flashcards
     } catch (error) {
         console.error('Error in OpenAI API or response:', error);
-        return NextResponse.error(); // Return a generic error response
+        return NextResponse.error(); // Return an error response
     }
 }
